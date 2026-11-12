@@ -1,0 +1,988 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+  <meta http-equiv="Pragma" content="no-cache" />
+  <meta http-equiv="Expires" content="0" />
+  <title>Cổng Tra Cứu Điểm Thi Môn Tin Học | Trường THPT Ba Chẽ</title>
+  <meta name="description"
+    content="Hệ thống tra cứu và công bố điểm thi môn Tin học trực tuyến theo lớp với bảo mật mã PIN - Trường THPT Ba Chẽ." />
+
+  <!-- Google Fonts: Inter & JetBrains Mono -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600;700&display=swap"
+    rel="stylesheet">
+
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            royal: {
+              50: '#eff6ff',
+              100: '#dbeafe',
+              200: '#bfdbfe',
+              500: '#3b82f6',
+              600: '#2563eb',
+              700: '#1d4ed8',
+              800: '#1e40af',
+              900: '#1e3a8a',
+            }
+          }
+        }
+      }
+    }
+  </script>
+
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <!-- SheetJS (xlsx) hỗ trợ đọc và xuất file Excel (.xlsx / .csv) -->
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+
+  <!-- Custom Styles -->
+  <link rel="stylesheet" href="styles.css?v=20261112_v3" />
+</head>
+
+<body
+  class="bg-tech-pattern min-h-screen flex flex-col text-slate-800 antialiased selection:bg-blue-600 selection:text-white">
+
+  <!-- ========================================================================
+       HEADER CHÍNH (THANH ĐIỀU HƯỚNG TRƯỜNG THPT BA CHẼ)
+       ======================================================================== -->
+  <header class="glass-header sticky top-0 z-40 no-print">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between gap-4">
+      <!-- Logo & Tên Trường -->
+      <div class="flex items-center gap-3.5 cursor-pointer group" onclick="switchView('auth')">
+        <div
+          class="w-12 h-12 rounded-2xl bg-gradient-to-br from-blue-700 via-blue-600 to-sky-500 flex items-center justify-center text-white shadow-lg shadow-blue-600/25 group-hover:scale-105 transition-transform duration-200">
+          <i data-lucide="cpu" class="w-6 h-6"></i>
+        </div>
+        <div>
+          <div class="flex items-center gap-2">
+            <span
+              class="text-xs font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-blue-100 text-blue-800 border border-blue-200">
+              Trường THPT Ba Chẽ
+            </span>
+            <span class="hidden sm:inline-flex items-center gap-1 text-xs font-medium text-slate-500">
+              <i data-lucide="terminal" class="w-3.5 h-3.5 text-sky-600"></i>
+              Tổ Toán - Tin
+            </span>
+          </div>
+          <h1
+            class="text-base sm:text-xl font-extrabold tracking-tight text-slate-900 group-hover:text-blue-700 transition-colors mt-0.5">
+            Cổng Tra Cứu Điểm Thi Môn Tin Học
+          </h1>
+        </div>
+      </div>
+
+      <!-- Các nút điều hướng bên phải -->
+      <div class="flex items-center gap-2.5">
+        <button id="nav-btn-student" onclick="switchView('auth')"
+          class="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-sm font-semibold text-blue-700 bg-blue-50 hover:bg-blue-100 border border-blue-200/80 transition-all">
+          <i data-lucide="search-code" class="w-4 h-4"></i>
+          <span class="hidden sm:inline">Tra cứu điểm</span>
+        </button>
+
+        <button id="nav-btn-admin" onclick="openAdminPortal()"
+          class="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-sm font-semibold text-slate-700 bg-white hover:bg-slate-100 hover:text-blue-700 border border-slate-200 shadow-sm transition-all"
+          title="Chuyển sang Cổng Giáo Viên (Quản trị viên)">
+          <i data-lucide="shield-alert" class="w-4 h-4 text-blue-600"></i>
+          <span>Cổng Giáo Viên <span class="hidden md:inline">(Admin)</span></span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- ========================================================================
+       CONTAINER NỘI DUNG CHÍNH
+       ======================================================================== -->
+  <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-10">
+
+    <!-- ======================================================================
+         MÀN HÌNH 1: XÁC THỰC MÃ PIN LỚP HỌC (TRANG CHỦ)
+         ====================================================================== -->
+    <section id="view-auth" class="view-section max-w-xl mx-auto">
+      <!-- Banner giới thiệu ngắn -->
+      <div class="text-center mb-6">
+        <div
+          class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white border border-blue-200 shadow-sm text-xs font-semibold text-blue-700 mb-3">
+          <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+          <span>Hệ thống công bố điểm trực tuyến • Năm học <span id="display-school-year">2026 - 2027</span></span>
+        </div>
+        <h2 class="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
+          Xác Thực Bảng Điểm Lớp Học
+        </h2>
+        <p class="text-sm sm:text-base text-slate-600 mt-1.5 max-w-md mx-auto">
+          Chọn khối, lớp học và nhập <span class="font-semibold text-blue-700">Mã PIN bảo mật</span> do giáo viên Tin
+          học cung cấp để mở khóa bảng điểm.
+        </p>
+      </div>
+
+      <!-- Card Xác thực Glassmorphism -->
+      <div id="auth-card" class="glass-card rounded-3xl p-6 sm:p-8 relative overflow-hidden">
+        <!-- Họa tiết công nghệ trang trí góc card -->
+        <div
+          class="absolute -top-12 -right-12 w-36 h-36 bg-gradient-to-br from-blue-500/15 to-sky-400/10 rounded-full blur-2xl pointer-events-none">
+        </div>
+        <div
+          class="absolute -bottom-12 -left-12 w-36 h-36 bg-gradient-to-tr from-indigo-500/15 to-blue-400/10 rounded-full blur-2xl pointer-events-none">
+        </div>
+
+        <!-- Biểu tượng Khiên bảo mật công nghệ ở trung tâm -->
+        <div class="flex flex-col items-center mb-6">
+          <div class="relative">
+            <div
+              class="w-16 h-16 rounded-2xl bg-gradient-to-br from-blue-800 via-blue-600 to-sky-500 flex items-center justify-center text-white shadow-xl shadow-blue-600/30 ring-4 ring-blue-100">
+              <i data-lucide="shield-check" class="w-8 h-8"></i>
+            </div>
+            <div
+              class="absolute -bottom-1 -right-1 w-6 h-6 rounded-lg bg-emerald-500 text-white flex items-center justify-center shadow-md ring-2 ring-white"
+              title="Bảo mật mã PIN theo lớp">
+              <i data-lucide="lock-keyhole" class="w-3.5 h-3.5"></i>
+            </div>
+          </div>
+          <span class="text-xs font-mono-tech uppercase tracking-widest text-blue-700 font-semibold mt-3">
+            PIN-AUTH // INFORMATICS SCORE PORTAL
+          </span>
+        </div>
+
+        <!-- Form Chọn Khối -> Chọn Lớp -> Nhập Mã PIN -->
+        <form id="pin-auth-form" onsubmit="handleUnlockScoreboard(event)" class="space-y-5">
+          <!-- Bước 1: Chọn Khối học -->
+          <div>
+            <label for="select-grade"
+              class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-2 flex items-center justify-between">
+              <span class="flex items-center gap-1.5">
+                <i data-lucide="layers" class="w-4 h-4 text-blue-600"></i>
+                1. Chọn Khối Học
+              </span>
+              <span class="text-slate-400 font-normal normal-case">Bước 1/3</span>
+            </label>
+
+            <!-- Nút chọn nhanh Khối + Dropdown đồng bộ -->
+            <div class="grid grid-cols-3 gap-2.5 mb-2.5">
+              <button type="button" onclick="selectGradeQuick('10')" id="grade-pill-10"
+                class="grade-pill py-2 px-3 rounded-xl text-sm font-bold border transition-all flex items-center justify-center gap-1.5">
+                <i data-lucide="monitor" class="w-4 h-4"></i>
+                Khối 10
+              </button>
+              <button type="button" onclick="selectGradeQuick('11')" id="grade-pill-11"
+                class="grade-pill py-2 px-3 rounded-xl text-sm font-bold border transition-all flex items-center justify-center gap-1.5">
+                <i data-lucide="code-2" class="w-4 h-4"></i>
+                Khối 11
+              </button>
+              <button type="button" onclick="selectGradeQuick('12')" id="grade-pill-12"
+                class="grade-pill py-2 px-3 rounded-xl text-sm font-bold border transition-all flex items-center justify-center gap-1.5">
+                <i data-lucide="database" class="w-4 h-4"></i>
+                Khối 12
+              </button>
+            </div>
+
+            <div class="relative">
+              <select id="select-grade" onchange="handleGradeChange(this.value)"
+                class="w-full appearance-none rounded-xl border border-slate-300 bg-white px-4 py-3 pr-10 text-sm font-semibold text-slate-800 shadow-sm focus:border-blue-600 focus:outline-none focus:ring-4 focus:ring-blue-600/15 transition-all">
+                <option value="10">Khối 10 </option>
+                <option value="11">Khối 11 </option>
+                <option value="12">Khối 12 </option>
+              </select>
+              <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3.5 text-slate-500">
+                <i data-lucide="chevron-down" class="w-4 h-4"></i>
+              </div>
+            </div>
+          </div>
+
+          <!-- Bước 2: Chọn Lớp học -->
+          <div>
+            <label for="select-class"
+              class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-2 flex items-center justify-between">
+              <span class="flex items-center gap-1.5">
+                <i data-lucide="users" class="w-4 h-4 text-blue-600"></i>
+                2. Chọn Lớp Học
+              </span>
+              <span id="class-status-badge"
+                class="text-xs font-semibold px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-700 border border-emerald-200">
+                Đã công bố điểm
+              </span>
+            </label>
+            <div class="relative">
+              <select id="select-class" onchange="handleClassSelectionChange()"
+                class="w-full appearance-none rounded-xl border border-slate-300 bg-white px-4 py-3 pr-10 text-sm font-semibold text-slate-800 shadow-sm focus:border-blue-600 focus:outline-none focus:ring-4 focus:ring-blue-600/15 transition-all">
+                <!-- Được render tự động bằng JavaScript theo Khối -->
+              </select>
+              <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3.5 text-slate-500">
+                <i data-lucide="chevron-down" class="w-4 h-4"></i>
+              </div>
+            </div>
+          </div>
+
+          <!-- Bước 3: Nhập Mã PIN của lớp -->
+          <div>
+            <label for="input-class-pin"
+              class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-2 flex items-center justify-between">
+              <span class="flex items-center gap-1.5">
+                <i data-lucide="key-round" class="w-4 h-4 text-blue-600"></i>
+                3. Nhập Mã PIN Lớp
+              </span>
+              <span class="text-slate-400 font-normal normal-case">Bước 3/3</span>
+            </label>
+            <div class="relative">
+              <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5 text-slate-400">
+                <i data-lucide="lock" class="w-4 h-4"></i>
+              </div>
+              <input type="password" id="input-class-pin"
+                placeholder="Nhập mã PIN của lớp (VD: 10A1@2026 hoặc 1012026)..." autocomplete="off" required
+                class="w-full rounded-xl border border-slate-300 bg-white pl-10 pr-12 py-3 text-sm font-mono-tech font-semibold tracking-wider text-slate-900 placeholder:font-sans placeholder:font-normal placeholder:tracking-normal placeholder:text-slate-400 shadow-sm focus:border-blue-600 focus:outline-none focus:ring-4 focus:ring-blue-600/15 transition-all" />
+              <!-- Nút con mắt ẩn/hiện mã PIN -->
+              <button type="button" onclick="togglePasswordVisibility('input-class-pin', 'pin-eye-icon')"
+                class="absolute inset-y-0 right-0 flex items-center px-3.5 text-slate-400 hover:text-blue-600 transition-colors"
+                title="Ẩn / Hiện mã PIN">
+                <i id="pin-eye-icon" data-lucide="eye" class="w-4 h-4"></i>
+              </button>
+            </div>
+          </div>
+
+          <!-- Thông báo lỗi trực quan khi nhập sai PIN hoặc lớp chưa mở -->
+          <div id="auth-error-box"
+            class="hidden rounded-xl bg-rose-50 border border-rose-200 p-3.5 text-xs sm:text-sm text-rose-700 flex items-start gap-2.5">
+            <i data-lucide="alert-triangle" class="w-5 h-5 text-rose-600 shrink-0 mt-0.5"></i>
+            <div id="auth-error-message" class="font-medium">
+              Mã PIN không chính xác. Vui lòng kiểm tra lại hoặc liên hệ giáo viên bộ môn Tin học.
+            </div>
+          </div>
+
+          <!-- Nút bấm nổi bật "Mở Khóa Bảng Điểm" -->
+          <button type="submit"
+            class="w-full py-3.5 px-6 rounded-xl bg-gradient-to-r from-blue-800 via-blue-600 to-sky-600 hover:from-blue-900 hover:via-blue-700 hover:to-sky-700 text-white font-bold text-sm sm:text-base shadow-lg shadow-blue-600/25 hover:shadow-xl hover:shadow-blue-600/35 hover:-translate-y-0.5 active:translate-y-0 transition-all duration-200 flex items-center justify-center gap-2.5">
+            <i data-lucide="unlock" class="w-5 h-5"></i>
+            <span>Mở Khóa Bảng Điểm</span>
+            <i data-lucide="arrow-right" class="w-4 h-4"></i>
+          </button>
+        </form>
+      </div>
+
+      <!-- Liên kết phụ ở góc dưới sang Cổng Giáo Viên -->
+      <div class="mt-5 flex items-center justify-between text-xs text-slate-500 px-2">
+        <span class="flex items-center gap-1.5">
+          <i data-lucide="shield" class="w-3.5 h-3.5 text-blue-600"></i>
+          Dữ liệu điểm được bảo mật theo từng đơn vị lớp
+        </span>
+        <button type="button" onclick="openAdminPortal()"
+          class="font-semibold text-blue-700 hover:text-blue-800 hover:underline flex items-center gap-1">
+          <i data-lucide="user-cog" class="w-3.5 h-3.5"></i>
+          Cổng Giáo Viên (Admin)
+        </button>
+      </div>
+    </section>
+
+    <!-- ======================================================================
+         MÀN HÌNH 2: BẢNG ĐIỂM TOÀN LỚP (SAU KHI MỞ KHÓA THÀNH CÔNG)
+         ====================================================================== -->
+    <section id="view-scoreboard" class="view-section hidden space-y-6">
+      <!-- Tiêu đề bản in (Chỉ hiện khi nhấn In bảng điểm) -->
+      <div class="hidden print-only mb-6 border-b-2 border-slate-800 pb-4">
+        <div class="flex justify-between items-start">
+          <div class="text-center">
+            <p class="text-xs font-bold uppercase">SỞ GIÁO DỤC VÀ ĐÀO TẠO QUẢNG NINH</p>
+            <p class="text-sm font-extrabold uppercase">TRƯỜNG THPT BA CHẼ</p>
+          </div>
+          <div class="text-center">
+            <p class="text-xs font-bold uppercase">CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM</p>
+            <p class="text-xs font-semibold">Độc lập - Tự do - Hạnh phúc</p>
+          </div>
+        </div>
+        <h2 id="print-title" class="text-xl font-bold uppercase text-center mt-4">
+          BẢNG ĐIỂM TỔNG HỢP MÔN TIN HỌC - LỚP 10A1
+        </h2>
+        <p id="print-subtitle" class="text-xs text-center mt-1"></p>
+      </div>
+
+      <!-- Thanh Thông tin tóm tắt Lớp học -->
+      <div class="glass-card rounded-3xl p-5 sm:p-6">
+        <div
+          class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 pb-5 border-b border-slate-200/80">
+          <div class="flex items-start sm:items-center gap-4">
+            <div
+              class="w-14 h-14 rounded-2xl bg-gradient-to-br from-blue-800 to-sky-600 text-white flex flex-col items-center justify-center shrink-0 shadow-md shadow-blue-600/20">
+              <span class="text-[10px] font-mono-tech uppercase tracking-wider opacity-80">LỚP</span>
+              <span id="sb-class-badge" class="text-lg font-extrabold leading-none">10A1</span>
+            </div>
+            <div>
+              <div class="flex flex-wrap items-center gap-2">
+                <span class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-blue-100 text-blue-800">
+                  Môn: Tin Học
+                </span>
+                <span id="sb-semester-badge"
+                  class="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-slate-100 text-slate-700">
+                  Học kỳ I • 2026 - 2027
+                </span>
+                <span
+                  class="inline-flex items-center gap-1 text-xs font-medium text-emerald-700 bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200">
+                  <i data-lucide="check-circle-2" class="w-3.5 h-3.5"></i>
+                  Đã xác thực PIN
+                </span>
+              </div>
+              <h2 id="sb-class-title" class="text-xl sm:text-2xl font-extrabold text-slate-900 mt-1">
+                Bảng Điểm Môn Tin Học - Lớp 10A1
+              </h2>
+              <p class="text-xs sm:text-sm text-slate-500 mt-0.5 flex flex-wrap items-center gap-x-4 gap-y-1">
+                <span class="inline-flex items-center gap-1">
+                  <i data-lucide="user-check" class="w-3.5 h-3.5 text-blue-600"></i>
+                  GV bộ môn: <strong id="sb-teacher-name" class="text-slate-700">Thầy/Cô Tổ Toán - Tin</strong>
+                </span>
+                <span class="inline-flex items-center gap-1">
+                  <i data-lucide="clock" class="w-3.5 h-3.5 text-blue-600"></i>
+                  Cập nhật: <span id="sb-updated-at">12/11/2026</span>
+                </span>
+              </p>
+            </div>
+          </div>
+
+          <!-- Các nút thao tác nhanh ở góc phải -->
+          <div class="flex flex-wrap items-center gap-2.5 no-print">
+            <button type="button" onclick="exportCurrentClassExcel()"
+              class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-semibold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 transition-all">
+              <i data-lucide="file-spreadsheet" class="w-4 h-4"></i>
+              <span>Xuất Excel</span>
+            </button>
+            <button type="button" onclick="window.print()"
+              class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-semibold text-slate-700 bg-white hover:bg-slate-100 border border-slate-200 shadow-sm transition-all">
+              <i data-lucide="printer" class="w-4 h-4 text-blue-600"></i>
+              <span>In bảng điểm</span>
+            </button>
+            <button type="button" onclick="switchView('auth')"
+              class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold text-white bg-blue-700 hover:bg-blue-800 shadow-sm transition-all">
+              <i data-lucide="arrow-left" class="w-4 h-4"></i>
+              <span>Chọn lớp khác</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- 4 Thẻ thống kê nhanh (Stat Cards) -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mt-5">
+          <!-- Thẻ 1: Sĩ số lớp -->
+          <div class="rounded-2xl bg-white p-4 border border-slate-200/80 shadow-sm flex items-center gap-4">
+            <div
+              class="w-12 h-12 rounded-2xl bg-blue-50 text-blue-700 flex items-center justify-center shrink-0 border border-blue-100">
+              <i data-lucide="users" class="w-6 h-6"></i>
+            </div>
+            <div>
+              <p class="text-xs font-semibold uppercase tracking-wider text-slate-500">Sĩ số lớp</p>
+              <div class="flex items-baseline gap-1.5 mt-0.5">
+                <span id="stat-total-students" class="text-2xl font-extrabold text-slate-900">0</span>
+                <span class="text-xs font-medium text-slate-500">học sinh</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Thẻ 2: Điểm trung bình cả lớp -->
+          <div class="rounded-2xl bg-white p-4 border border-slate-200/80 shadow-sm flex items-center gap-4">
+            <div
+              class="w-12 h-12 rounded-2xl bg-indigo-50 text-indigo-700 flex items-center justify-center shrink-0 border border-indigo-100">
+              <i data-lucide="bar-chart-3" class="w-6 h-6"></i>
+            </div>
+            <div>
+              <p class="text-xs font-semibold uppercase tracking-wider text-slate-500">Điểm TB cả lớp</p>
+              <div class="flex items-baseline gap-2 mt-0.5">
+                <span id="stat-class-avg" class="text-2xl font-extrabold text-indigo-700 font-mono-tech">0.0</span>
+                <span id="stat-highest-score" class="text-xs font-medium text-slate-500">Cao nhất: 0.0</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Thẻ 3: Số học sinh đạt điểm Giỏi / Khá -->
+          <div class="rounded-2xl bg-white p-4 border border-slate-200/80 shadow-sm flex items-center gap-4">
+            <div
+              class="w-12 h-12 rounded-2xl bg-emerald-50 text-emerald-700 flex items-center justify-center shrink-0 border border-emerald-100">
+              <i data-lucide="award" class="w-6 h-6"></i>
+            </div>
+            <div>
+              <p class="text-xs font-semibold uppercase tracking-wider text-slate-500">Mức Giỏi & Khá (≥ 6.5)</p>
+              <div class="flex items-baseline gap-2 mt-0.5">
+                <span id="stat-good-count" class="text-2xl font-extrabold text-emerald-700">0</span>
+                <span id="stat-good-detail" class="text-xs font-medium text-slate-500">(0 Giỏi, 0 Khá)</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Thẻ 4: Tỷ lệ Đạt yêu cầu (≥ 5.0) -->
+          <div class="rounded-2xl bg-white p-4 border border-slate-200/80 shadow-sm flex items-center gap-4">
+            <div
+              class="w-12 h-12 rounded-2xl bg-sky-50 text-sky-700 flex items-center justify-center shrink-0 border border-sky-100">
+              <i data-lucide="pie-chart" class="w-6 h-6"></i>
+            </div>
+            <div>
+              <p class="text-xs font-semibold uppercase tracking-wider text-slate-500">Tỷ lệ trên TB (≥ 5.0)</p>
+              <div class="flex items-baseline gap-2 mt-0.5">
+                <span id="stat-pass-rate" class="text-2xl font-extrabold text-sky-700 font-mono-tech">100%</span>
+                <span id="stat-need-effort" class="text-xs font-medium text-slate-500">0 cần cố gắng</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Thanh Công cụ Tìm kiếm, Lọc & Chú giải mức điểm -->
+      <div class="glass-card rounded-2xl p-4 sm:p-5 no-print">
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-3.5">
+          <!-- Ô tìm kiếm nhanh tên học sinh theo thời gian thực -->
+          <div class="relative flex-1 max-w-md">
+            <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5 text-slate-400">
+              <i data-lucide="search" class="w-4 h-4"></i>
+            </div>
+            <input type="text" id="search-student-input" oninput="renderScoreboardTable()"
+              placeholder="Tìm nhanh theo họ tên hoặc mã định danh Bộ GD&ĐT..."
+              class="w-full rounded-xl border border-slate-300 bg-white pl-10 pr-9 py-2.5 text-sm text-slate-800 placeholder:text-slate-400 focus:border-blue-600 focus:outline-none focus:ring-4 focus:ring-blue-600/15 transition-all" />
+            <button type="button" id="btn-clear-search" onclick="clearStudentSearch()"
+              class="hidden absolute inset-y-0 right-0 flex items-center pr-3 text-slate-400 hover:text-slate-600"
+              title="Xóa từ khóa">
+              <i data-lucide="x-circle" class="w-4 h-4"></i>
+            </button>
+          </div>
+
+          <!-- Bộ lọc mức điểm & Sắp xếp -->
+          <div class="flex flex-wrap items-center gap-2.5">
+            <div class="flex items-center gap-1.5">
+              <label for="filter-tier" class="text-xs font-semibold text-slate-500">Mức điểm:</label>
+              <select id="filter-tier" onchange="renderScoreboardTable()"
+                class="rounded-xl border border-slate-300 bg-white px-3 py-2 text-xs sm:text-sm font-semibold text-slate-700 focus:border-blue-600 focus:outline-none">
+                <option value="all">Tất cả học sinh</option>
+                <option value="excellent">Giỏi / Tốt (≥ 8.0)</option>
+                <option value="good">Khá (6.5 - 7.9)</option>
+                <option value="average">Đạt (5.0 - 6.4)</option>
+                <option value="effort">Cần cố gắng (&lt; 5.0)</option>
+              </select>
+            </div>
+
+            <div class="flex items-center gap-1.5">
+              <label for="sort-by" class="text-xs font-semibold text-slate-500">Sắp xếp:</label>
+              <select id="sort-by" onchange="renderScoreboardTable()"
+                class="rounded-xl border border-slate-300 bg-white px-3 py-2 text-xs sm:text-sm font-semibold text-slate-700 focus:border-blue-600 focus:outline-none">
+                <option value="stt">Theo STT (Mặc định)</option>
+                <option value="avg-desc">Điểm TB: Cao → Thấp</option>
+                <option value="avg-asc">Điểm TB: Thấp → Cao</option>
+                <option value="name-asc">Tên: A → Z</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <!-- Chú giải màu sắc mức điểm -->
+        <div
+          class="mt-3.5 pt-3 border-t border-slate-200/70 flex flex-wrap items-center justify-between gap-2 text-xs text-slate-500">
+          <div class="flex flex-wrap items-center gap-3">
+            <span class="font-semibold text-slate-600">Phân màu mức điểm:</span>
+            <span class="inline-flex items-center gap-1.5">
+              <span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
+              <span>Giỏi/Tốt (≥ 8.0)</span>
+            </span>
+            <span class="inline-flex items-center gap-1.5">
+              <span class="w-2.5 h-2.5 rounded-full bg-blue-500"></span>
+              <span>Khá (6.5 - 7.9)</span>
+            </span>
+            <span class="inline-flex items-center gap-1.5">
+              <span class="w-2.5 h-2.5 rounded-full bg-amber-500"></span>
+              <span>Đạt (5.0 - 6.4)</span>
+            </span>
+            <span class="inline-flex items-center gap-1.5">
+              <span class="w-2.5 h-2.5 rounded-full bg-rose-500"></span>
+              <span>Cần cố gắng (&lt; 5.0)</span>
+            </span>
+          </div>
+          <div class="flex flex-wrap items-center gap-2">
+            <span class="font-mono-tech text-[11px] text-slate-500">
+              Biểu mẫu chuẩn Bộ GD&ĐT • ĐTBmhk = (Tổng ĐĐGtx + 2×ĐĐGgk + 3×ĐĐGck) / (Số cột ĐĐGtx + 5)
+            </span>
+          </div>
+        </div>
+
+        <!-- Thanh chuyển đổi chế độ hiển thị cho Điện thoại & Máy tính -->
+        <div class="mt-3 pt-3 border-t border-slate-200/70 flex flex-wrap items-center justify-between gap-2">
+          <div class="flex items-center gap-1.5 text-xs text-blue-700 font-medium">
+            <i data-lucide="smartphone" class="w-4 h-4 shrink-0"></i>
+            <span>Trên điện thoại: có thể vuốt ngang bảng hoặc chọn <strong>Chế độ Thẻ ĐT</strong> để xem rõ từng cột
+              điểm.</span>
+          </div>
+          <div class="flex items-center gap-2">
+            <button type="button" id="btn-mode-table" onclick="setScoreboardDisplayMode('table')"
+              class="px-3 py-1.5 rounded-xl text-xs font-bold bg-blue-600 text-white shadow-sm transition-all flex items-center gap-1.5">
+              <i data-lucide="table" class="w-3.5 h-3.5"></i>
+              <span>Bảng 15 cột</span>
+            </button>
+            <button type="button" id="btn-mode-cards" onclick="setScoreboardDisplayMode('cards')"
+              class="px-3 py-1.5 rounded-xl text-xs font-bold bg-white text-slate-700 border border-slate-300 hover:bg-slate-50 transition-all flex items-center gap-1.5">
+              <i data-lucide="layout-list" class="w-3.5 h-3.5"></i>
+              <span>Thẻ Điện thoại</span>
+            </button>
+            <button type="button" onclick="forceReloadServerData()"
+              class="px-3 py-1.5 rounded-xl text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100 transition-all flex items-center gap-1"
+              title="Tải lại bảng điểm mới nhất từ máy chủ / file dữ liệu">
+              <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i>
+              <span>Làm mới dữ liệu</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Chế độ 1: Bảng điểm 15 cột chuẩn biểu mẫu Bộ GD&ĐT (hỗ trợ vuốt ngang trên ĐT) -->
+      <div id="scoreboard-table-wrapper" class="glass-card rounded-3xl overflow-hidden p-0 sm:p-2">
+        <div class="table-scroll-container">
+          <table class="w-full text-left border-collapse min-w-[920px]">
+            <thead>
+              <tr
+                class="bg-gradient-to-r from-slate-900 via-blue-950 to-slate-900 text-white text-xs uppercase tracking-wider">
+                <th rowspan="2" class="py-3 px-2.5 text-center font-bold border border-slate-700/80 w-11">STT</th>
+                <th rowspan="2" class="py-3 px-2.5 text-center font-bold border border-slate-700/80 min-w-[115px]">Mã
+                  định
+                  danh<br><span class="text-[10px] font-normal opacity-80">Bộ GD&ĐT</span></th>
+                <th rowspan="2" class="py-3 px-3.5 font-bold border border-slate-700/80 min-w-[175px] sticky-col-name">
+                  Họ và tên</th>
+                <th rowspan="2" class="py-3 px-2.5 text-center font-bold border border-slate-700/80 min-w-[95px]">Ngày
+                  sinh</th>
+                <th rowspan="2" class="py-3 px-2 text-center font-bold border border-slate-700/80">Giới tính</th>
+                <th colspan="5" class="py-2 px-2 text-center font-bold border border-slate-700/80 bg-blue-950/80">ĐĐGtx
+                </th>
+                <th rowspan="2" class="py-3 px-2.5 text-center font-bold border border-slate-700/80">ĐĐGgk</th>
+                <th rowspan="2" class="py-3 px-2.5 text-center font-bold border border-slate-700/80">ĐĐGck</th>
+                <th rowspan="2" class="py-3 px-2.5 text-center font-bold border border-slate-700/80 bg-blue-900/60">
+                  ĐTBmhk1</th>
+                <th rowspan="2" class="py-3 px-2.5 text-center font-bold border border-slate-700/80 bg-blue-900/60">
+                  ĐTBmhk2</th>
+                <th rowspan="2" class="py-3 px-2.5 text-center font-bold border border-slate-700/80 bg-indigo-900/70">
+                  ĐTBmcn</th>
+              </tr>
+              <tr class="bg-slate-800 text-sky-200 text-xs font-mono-tech">
+                <th class="py-1.5 px-2 text-center font-bold border border-slate-700/80 w-10">1</th>
+                <th class="py-1.5 px-2 text-center font-bold border border-slate-700/80 w-10">2</th>
+                <th class="py-1.5 px-2 text-center font-bold border border-slate-700/80 w-10">3</th>
+                <th class="py-1.5 px-2 text-center font-bold border border-slate-700/80 w-10">4</th>
+                <th class="py-1.5 px-2 text-center font-bold border border-slate-700/80 w-10">5</th>
+              </tr>
+            </thead>
+            <tbody id="scoreboard-tbody" class="divide-y divide-slate-200/80 text-sm bg-white/95">
+              <!-- Dữ liệu học sinh được render tại đây -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Chế độ 2: Danh sách Thẻ điểm tối ưu cho màn hình Điện thoại -->
+      <div id="scoreboard-cards-wrapper" class="hidden grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+        <!-- Render thẻ điểm từng học sinh cho điện thoại tại đây -->
+      </div>
+
+      <!-- Trạng thái khi không tìm thấy học sinh phù hợp bộ lọc -->
+      <div id="scoreboard-empty" class="hidden glass-card rounded-3xl py-12 px-4 text-center">
+        <div class="w-12 h-12 rounded-2xl bg-slate-100 text-slate-400 flex items-center justify-center mx-auto mb-3">
+          <i data-lucide="user-x" class="w-6 h-6"></i>
+        </div>
+        <p class="text-base font-bold text-slate-700">Không tìm thấy học sinh phù hợp</p>
+        <p class="text-xs text-slate-500 mt-1">Hãy thử từ khóa khác hoặc đặt lại bộ lọc mức điểm.</p>
+      </div>
+    </section>
+
+    <!-- ======================================================================
+         MÀN HÌNH 3A: ĐĂNG NHẬP CỔNG GIÁO VIÊN (ADMIN LOGIN)
+         ====================================================================== -->
+    <section id="view-admin-login" class="view-section hidden max-w-md mx-auto">
+      <div class="glass-card rounded-3xl p-6 sm:p-8">
+        <div class="flex flex-col items-center text-center mb-6">
+          <div
+            class="w-14 h-14 rounded-2xl bg-gradient-to-br from-slate-900 to-blue-800 text-white flex items-center justify-center shadow-lg mb-3">
+            <i data-lucide="user-cog" class="w-7 h-7"></i>
+          </div>
+          <span
+            class="text-xs font-bold uppercase tracking-wider text-blue-700 bg-blue-50 px-2.5 py-0.5 rounded-full border border-blue-200">
+            Dành cho Giáo viên Tin học
+          </span>
+          <h2 class="text-2xl font-extrabold text-slate-900 mt-2">
+            Quản Trị Bảng Điểm & Mã PIN
+          </h2>
+          <p class="text-xs sm:text-sm text-slate-500 mt-1">
+            Đăng nhập để đổi Mã PIN từng lớp, bật/tắt công bố điểm và cập nhật điểm từ Excel.
+          </p>
+        </div>
+
+        <form onsubmit="handleAdminLogin(event)" class="space-y-4">
+          <div>
+            <label for="admin-password-input"
+              class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-2">
+              Mật khẩu Quản trị viên
+            </label>
+            <div class="relative">
+              <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5 text-slate-400">
+                <i data-lucide="key" class="w-4 h-4"></i>
+              </div>
+              <input type="password" id="admin-password-input" placeholder="Nhập mật khẩu quản trị..." required
+                class="w-full rounded-xl border border-slate-300 bg-white pl-10 pr-12 py-3 text-sm font-mono-tech font-semibold text-slate-900 focus:border-blue-600 focus:outline-none focus:ring-4 focus:ring-blue-600/15" />
+              <button type="button" onclick="togglePasswordVisibility('admin-password-input', 'admin-eye-icon')"
+                class="absolute inset-y-0 right-0 flex items-center px-3.5 text-slate-400 hover:text-blue-600">
+                <i id="admin-eye-icon" data-lucide="eye" class="w-4 h-4"></i>
+              </button>
+            </div>
+          </div>
+
+          <div id="admin-login-error"
+            class="hidden rounded-xl bg-rose-50 border border-rose-200 p-3 text-xs font-medium text-rose-700 flex items-center gap-2">
+            <i data-lucide="alert-circle" class="w-4 h-4 shrink-0"></i>
+            <span>Mật khẩu quản trị không đúng. Vui lòng thử lại!</span>
+          </div>
+
+          <div class="flex items-center gap-2.5 pt-1">
+            <button type="button" onclick="switchView('auth')"
+              class="w-1/3 py-3 px-4 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 font-semibold text-sm transition-all">
+              Quay lại
+            </button>
+            <button type="submit"
+              class="w-2/3 py-3 px-5 rounded-xl bg-blue-700 hover:bg-blue-800 text-white font-bold text-sm shadow-md shadow-blue-700/20 transition-all flex items-center justify-center gap-2">
+              <i data-lucide="log-in" class="w-4 h-4"></i>
+              <span>Đăng Nhập Admin</span>
+            </button>
+          </div>
+        </form>
+      </div>
+    </section>
+
+    <!-- ======================================================================
+         MÀN HÌNH 3B: BẢNG ĐIỀU KHIỂN QUẢN TRỊ GIÁO VIÊN (ADMIN DASHBOARD)
+         ====================================================================== -->
+    <section id="view-admin-dashboard" class="view-section hidden space-y-6">
+      <!-- Header Admin Dashboard -->
+      <div class="glass-card rounded-3xl p-5 sm:p-6 flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+        <div class="flex items-center gap-4">
+          <div
+            class="w-12 h-12 rounded-2xl bg-gradient-to-br from-blue-900 to-blue-600 text-white flex items-center justify-center shadow-md">
+            <i data-lucide="sliders" class="w-6 h-6"></i>
+          </div>
+          <div>
+            <div class="flex items-center gap-2">
+              <span class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-blue-100 text-blue-800">
+                Quản trị viên Giáo viên
+              </span>
+              <span class="text-xs text-slate-500">Trường THPT Ba Chẽ</span>
+            </div>
+            <h2 class="text-xl sm:text-2xl font-extrabold text-slate-900 mt-0.5">
+              Bảng Điều Khiển Công Bố Điểm & Mã PIN
+            </h2>
+          </div>
+        </div>
+
+        <div class="flex flex-wrap items-center gap-2.5">
+          <button type="button" onclick="saveDataJsonForMobileSync()"
+            class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs sm:text-sm font-bold text-white bg-gradient-to-r from-blue-700 to-sky-600 hover:from-blue-800 hover:to-sky-700 shadow-md shadow-blue-600/20 transition-all"
+            title="Lưu toàn bộ bảng điểm vừa Import ra file data.json để Điện thoại truy cập thấy ngay">
+            <i data-lucide="smartphone" class="w-4 h-4"></i>
+            <span>Lưu đồng bộ Điện thoại (data.json)</span>
+          </button>
+          <button type="button" onclick="openAddClassModal()"
+            class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-semibold text-blue-700 bg-blue-50 hover:bg-blue-100 border border-blue-200 transition-all">
+            <i data-lucide="plus-circle" class="w-4 h-4"></i>
+            <span>Thêm lớp mới</span>
+          </button>
+          <button type="button" onclick="resetToDefaultData()"
+            class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-semibold text-amber-700 bg-amber-50 hover:bg-amber-100 border border-amber-200 transition-all"
+            title="Khôi phục lại toàn bộ dữ liệu mẫu ban đầu">
+            <i data-lucide="rotate-ccw" class="w-4 h-4"></i>
+            <span>Khôi phục mẫu</span>
+          </button>
+          <button type="button" onclick="handleAdminLogout()"
+            class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-semibold text-rose-700 bg-rose-50 hover:bg-rose-100 border border-rose-200 transition-all">
+            <i data-lucide="log-out" class="w-4 h-4"></i>
+            <span>Đăng xuất</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- KHU VỰC 1: QUẢN LÝ MÃ PIN & TRẠNG THÁI CÔNG BỐ CỦA TỪNG LỚP -->
+      <div class="glass-card rounded-3xl p-5 sm:p-6">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-4">
+          <div>
+            <h3 class="text-base sm:text-lg font-extrabold text-slate-900 flex items-center gap-2">
+              <i data-lucide="key-round" class="w-5 h-5 text-blue-600"></i>
+              1. Quản Lý Mã PIN & Trạng Thái Công Bố Theo Lớp
+            </h3>
+            <p class="text-xs text-slate-500 mt-0.5">
+              Đổi mã PIN truy cập của từng lớp hoặc bật/tắt công bố điểm. Nhấn "Quản lý điểm" để nhập/sửa điểm của lớp
+              đó.
+            </p>
+          </div>
+          <div class="flex items-center gap-2">
+            <span class="text-xs font-semibold text-slate-500">Lọc khối:</span>
+            <select id="admin-filter-grade" onchange="renderAdminClassCards()"
+              class="rounded-xl border border-slate-300 bg-white px-3 py-1.5 text-xs font-bold text-slate-700">
+              <option value="all">Tất cả các khối</option>
+              <option value="10">Khối 10</option>
+              <option value="11">Khối 11</option>
+              <option value="12">Khối 12</option>
+            </select>
+          </div>
+        </div>
+
+        <div id="admin-class-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <!-- Render danh sách card lớp học ở đây -->
+        </div>
+      </div>
+
+      <!-- KHU VỰC 2: CHỈNH SỬA TRỰC TIẾP BẢNG ĐIỂM & NHẬP TỪ EXCEL (.XLSX / .CSV) -->
+      <div id="admin-score-editor-section" class="glass-card rounded-3xl p-5 sm:p-6 space-y-5">
+        <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-4 border-b border-slate-200">
+          <div>
+            <div class="flex items-center gap-2">
+              <span
+                class="text-xs font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-indigo-100 text-indigo-800">
+                Trình quản lý điểm lớp học
+              </span>
+            </div>
+            <h3 class="text-lg sm:text-xl font-extrabold text-slate-900 mt-1 flex items-center gap-2">
+              <i data-lucide="table-properties" class="w-5 h-5 text-blue-600"></i>
+              <span>2. Chỉnh Sửa Điểm & Import Excel — Lớp </span>
+              <select id="admin-select-class-editor" onchange="handleAdminSelectClassForEdit(this.value)"
+                class="rounded-xl border-2 border-blue-600 bg-blue-50/60 px-3 py-1 text-base font-extrabold text-blue-800 focus:outline-none">
+                <!-- Các lớp được render tại đây -->
+              </select>
+            </h3>
+          </div>
+
+          <!-- Cụm nút Import Excel / Tải file mẫu / Thêm học sinh -->
+          <div class="flex flex-wrap items-center gap-2.5">
+            <!-- Input file ẩn nhận .xlsx, .xls, .csv -->
+            <input type="file" id="excel-file-input" accept=".xlsx,.xls,.csv" class="hidden"
+              onchange="handleExcelFileUpload(event)" />
+            <button type="button" onclick="document.getElementById('excel-file-input').click()"
+              class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold text-white bg-emerald-600 hover:bg-emerald-700 shadow-sm shadow-emerald-600/20 transition-all">
+              <i data-lucide="upload" class="w-4 h-4"></i>
+              <span>Import Excel (.xlsx/.csv)</span>
+            </button>
+
+            <button type="button" onclick="downloadSampleExcelTemplate()"
+              class="inline-flex items-center gap-2 px-3.5 py-2.5 rounded-xl text-xs sm:text-sm font-semibold text-slate-700 bg-white hover:bg-slate-100 border border-slate-200 shadow-sm transition-all"
+              title="Tải file Excel mẫu về máy để điền điểm">
+              <i data-lucide="download" class="w-4 h-4 text-blue-600"></i>
+              <span>Tải file Excel mẫu</span>
+            </button>
+
+            <button type="button" onclick="addStudentRowInAdmin()"
+              class="inline-flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl text-xs sm:text-sm font-semibold text-blue-700 bg-blue-50 hover:bg-blue-100 border border-blue-200 transition-all">
+              <i data-lucide="user-plus" class="w-4 h-4"></i>
+              <span>Thêm học sinh</span>
+            </button>
+
+            <button type="button" onclick="autoCalculateSemesterAverageForClass()"
+              class="inline-flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl text-xs sm:text-sm font-semibold text-indigo-700 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 transition-all"
+              title="Tự động tính ĐTBmhk1 từ ĐĐGtx, ĐĐGgk và ĐĐGck">
+              <i data-lucide="calculator" class="w-4 h-4"></i>
+              <span>Tự động tính ĐTBmhk</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Hộp hướng dẫn đồng bộ bảng điểm vừa Import sang Điện thoại -->
+        <div
+          class="rounded-2xl bg-blue-50/90 border border-blue-200 p-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs text-blue-900">
+          <div class="flex items-start sm:items-center gap-2.5">
+            <i data-lucide="smartphone" class="w-5 h-5 text-blue-600 shrink-0 mt-0.5 sm:mt-0"></i>
+            <div>
+              <strong>Đồng bộ bảng điểm vừa Import sang Điện thoại:</strong>
+              <span>Khi bạn Import Excel trên máy tính, dữ liệu mới nằm trên trình duyệt máy tính. Hãy nhấn nút
+                <strong>"Lưu đồng bộ Điện thoại (data.json)"</strong> để lưu vào file <code
+                  class="font-mono-tech bg-white px-1.5 py-0.5 rounded border border-blue-200">data.json</code> trong
+                thư mục dự án (hoặc đẩy lên GitHub/Host) giúp mọi điện thoại hiển thị đúng bảng điểm!</span>
+            </div>
+          </div>
+          <button type="button" onclick="saveDataJsonForMobileSync()"
+            class="shrink-0 inline-flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-xl bg-blue-700 hover:bg-blue-800 text-white font-bold shadow-sm transition-all">
+            <i data-lucide="save" class="w-4 h-4"></i>
+            <span>Lưu file data.json ngay</span>
+          </button>
+        </div>
+
+        <!-- Thông tin nhanh của lớp đang chỉnh sửa (GV phụ trách, Học kỳ) -->
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 bg-slate-50/90 p-3.5 rounded-2xl border border-slate-200/80">
+          <div>
+            <label class="block text-[11px] font-bold uppercase text-slate-500 mb-1">Giáo viên giảng dạy</label>
+            <input type="text" id="admin-edit-teacher" onchange="saveClassMetadataFromAdmin()"
+              class="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-xs sm:text-sm font-semibold text-slate-800" />
+          </div>
+          <div>
+            <div class="flex items-center justify-between mb-1">
+              <label for="admin-edit-semester" class="block text-[11px] font-bold uppercase text-slate-500">Học kỳ / Đợt
+                công bố</label>
+              <button type="button" onclick="applySemesterToAllClasses()"
+                class="text-[11px] font-semibold text-blue-600 hover:underline"
+                title="Áp dụng đợt công bố này cho toàn bộ các lớp">
+                Áp dụng mọi lớp
+              </button>
+            </div>
+            <select id="admin-edit-semester" onchange="saveClassMetadataFromAdmin()"
+              class="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-xs sm:text-sm font-semibold text-slate-800 focus:border-blue-600 focus:outline-none">
+              <option value="Giữa kỳ I">Giữa kỳ I</option>
+              <option value="Cuối kỳ I">Cuối kỳ I</option>
+              <option value="Giữa kỳ II">Giữa kỳ II</option>
+              <option value="Cuối kỳ II">Cuối kỳ II</option>
+            </select>
+          </div>
+          <div class="flex items-end justify-between sm:justify-end gap-2">
+            <button type="button" onclick="previewClassAsStudent()"
+              class="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-4 py-2 rounded-xl text-xs sm:text-sm font-bold text-blue-700 bg-white hover:bg-blue-50 border border-blue-200 shadow-sm transition-all">
+              <i data-lucide="external-link" class="w-4 h-4"></i>
+              <span>Xem thử giao diện Học sinh</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Bảng chỉnh sửa trực tiếp từng con điểm chuẩn biểu mẫu Bộ GD&ĐT -->
+        <div class="overflow-x-auto rounded-2xl border border-slate-200 bg-white">
+          <table class="w-full text-left border-collapse">
+            <thead>
+              <tr class="bg-slate-100 text-slate-700 text-xs uppercase border-b border-slate-200">
+                <th rowspan="2" class="py-2.5 px-2 text-center font-bold border border-slate-200 w-10">STT</th>
+                <th rowspan="2" class="py-2.5 px-2 text-center font-bold border border-slate-200 min-w-[125px]">Mã định
+                  danh<br><span class="text-[10px] font-normal text-slate-500">Bộ GD&ĐT</span></th>
+                <th rowspan="2" class="py-2.5 px-3 font-bold border border-slate-200 min-w-[175px]">Họ và tên</th>
+                <th rowspan="2" class="py-2.5 px-2 text-center font-bold border border-slate-200 min-w-[105px]">Ngày
+                  sinh</th>
+                <th rowspan="2" class="py-2.5 px-2 text-center font-bold border border-slate-200 min-w-[75px]">Giới tính
+                </th>
+                <th colspan="5"
+                  class="py-1.5 px-2 text-center font-bold border border-slate-200 bg-blue-50/60 text-blue-900">ĐĐGtx
+                </th>
+                <th rowspan="2" class="py-2.5 px-2 text-center font-bold border border-slate-200">ĐĐGgk</th>
+                <th rowspan="2" class="py-2.5 px-2 text-center font-bold border border-slate-200">ĐĐGck</th>
+                <th rowspan="2"
+                  class="py-2.5 px-2 text-center font-bold border border-slate-200 bg-blue-50/80 text-blue-900">ĐTBmhk1
+                </th>
+                <th rowspan="2"
+                  class="py-2.5 px-2 text-center font-bold border border-slate-200 bg-blue-50/80 text-blue-900">ĐTBmhk2
+                </th>
+                <th rowspan="2"
+                  class="py-2.5 px-2 text-center font-bold border border-slate-200 bg-indigo-50/80 text-indigo-900">
+                  ĐTBmcn</th>
+                <th rowspan="2" class="py-2.5 px-2 text-center font-bold border border-slate-200 w-10">Xóa</th>
+              </tr>
+              <tr class="bg-slate-50 text-slate-600 text-[11px] font-mono-tech border-b border-slate-200">
+                <th class="py-1 px-1.5 text-center font-bold border border-slate-200">1</th>
+                <th class="py-1 px-1.5 text-center font-bold border border-slate-200">2</th>
+                <th class="py-1 px-1.5 text-center font-bold border border-slate-200">3</th>
+                <th class="py-1 px-1.5 text-center font-bold border border-slate-200">4</th>
+                <th class="py-1 px-1.5 text-center font-bold border border-slate-200">5</th>
+              </tr>
+            </thead>
+            <tbody id="admin-editor-tbody" class="divide-y divide-slate-200 text-sm">
+              <!-- Các dòng chỉnh sửa điểm trực tiếp -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ========================================================================
+       MODAL THÊM LỚP HỌC MỚI (TRONG ADMIN)
+       ======================================================================== -->
+  <div id="modal-add-class"
+    class="fixed inset-0 z-50 hidden bg-slate-900/50 backdrop-blur-sm flex items-center justify-center p-4 no-print">
+    <div class="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-slate-200">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+        <h3 class="text-lg font-extrabold text-slate-900 flex items-center gap-2">
+          <i data-lucide="folder-plus" class="w-5 h-5 text-blue-600"></i>
+          Thêm Lớp Học Mới
+        </h3>
+        <button type="button" onclick="closeAddClassModal()" class="text-slate-400 hover:text-slate-600">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <form onsubmit="handleCreateNewClass(event)" class="space-y-4 mt-4">
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-bold uppercase text-slate-600 mb-1">Khối học</label>
+            <select id="new-class-grade"
+              class="w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm font-semibold">
+              <option value="10">Khối 10</option>
+              <option value="11">Khối 11</option>
+              <option value="12">Khối 12</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs font-bold uppercase text-slate-600 mb-1">Tên lớp (VD: 10A4)</label>
+            <input type="text" id="new-class-name" placeholder="10A4" required
+              class="w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm font-bold uppercase" />
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold uppercase text-slate-600 mb-1">Mã PIN mở khóa của lớp</label>
+          <input type="text" id="new-class-pin" placeholder="VD: 1042026" required
+            class="w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm font-mono-tech font-bold" />
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold uppercase text-slate-600 mb-1">Học kỳ / Đợt công bố</label>
+          <select id="new-class-semester"
+            class="w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm font-semibold text-slate-800">
+            <option value="Giữa kỳ I">Giữa kỳ I</option>
+            <option value="Cuối kỳ I">Cuối kỳ I</option>
+            <option value="Giữa kỳ II">Giữa kỳ II</option>
+            <option value="Cuối kỳ II">Cuối kỳ II</option>
+          </select>
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold uppercase text-slate-600 mb-1">Giáo viên giảng dạy</label>
+          <input type="text" id="new-class-teacher" value="Thầy Quân - Tổ Toán - Tin"
+            class="w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm" />
+        </div>
+
+        <div class="flex justify-end gap-2 pt-2">
+          <button type="button" onclick="closeAddClassModal()"
+            class="px-4 py-2.5 rounded-xl border border-slate-200 text-sm font-semibold text-slate-600 hover:bg-slate-50">
+            Hủy
+          </button>
+          <button type="submit"
+            class="px-5 py-2.5 rounded-xl bg-blue-700 hover:bg-blue-800 text-white text-sm font-bold shadow-sm">
+            Tạo Lớp Mới
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ========================================================================
+       TOAST NOTIFICATION (THÔNG BÁO GÓC MÀN HÌNH)
+       ======================================================================== -->
+  <div id="toast-container" class="fixed bottom-5 right-5 z-50 flex flex-col gap-2 no-print pointer-events-none"></div>
+
+  <!-- ========================================================================
+       FOOTER
+       ======================================================================== -->
+  <footer class="mt-auto border-t border-slate-200/80 bg-white/70 backdrop-blur-sm py-5 no-print">
+    <div
+      class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-500">
+      <div class="flex items-center gap-2">
+        <span class="w-2 h-2 rounded-full bg-blue-600"></span>
+        <strong class="text-slate-700">Trường THPT Ba Chẽ</strong>
+        <span>— Hệ thống Tra cứu & Công bố Điểm thi Môn Tin học</span>
+      </div>
+      <div class="flex items-center gap-4">
+        <span>Bảo mật theo Mã PIN lớp</span>
+        <span>•</span>
+        <button type="button" onclick="openAdminPortal()" class="text-blue-700 hover:underline font-semibold">
+          Quản trị Giáo viên
+        </button>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Main Application Script -->
+  <script src="app.js?v=20261112_v4"></script>
+</body>
+
+</html>
